@@ -9,8 +9,6 @@ export default Object.freeze({
 
   port: parseInt(process.env.PORT || "5000"),
 
-  apiKey: process.env.API_KEY,
-
   mongoDB: {
     uri: process.env.MONGO_URI || "",
     dbName: process.env.MONGO_DB_NAME || "",
