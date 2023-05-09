@@ -1,0 +1,3 @@
+#!/bin/sh
+
+npm run check:circular-dependencies && npm run format && npm run lint:fix && git add .
