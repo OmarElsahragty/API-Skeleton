@@ -1,10 +1,9 @@
 import { sign } from "jsonwebtoken";
 import DefaultService from "./default.service";
 import { userRepository } from "../database/repositories";
-import { unauthorized } from "../errors";
 import { getTokenDate } from "../helpers";
 import { verifyHash } from "../libraries";
-import { UserInterface } from "../types";
+import { UserInterface, UnauthorizedException } from "../types";
 import config from "../../config";
 
 class UserService extends DefaultService<UserInterface> {
@@ -16,7 +15,7 @@ class UserService extends DefaultService<UserInterface> {
   authenticate = async (email: string, watchword: string): Promise<{ user: Partial<UserInterface>; token: string }> => {
     const user = await userRepository.findOne({ filter: { email, isDeleted: false } });
     if (!user || user.accessType === "DENIED" || !user.password || !(await verifyHash(user.password, watchword))) {
-      throw unauthorized("Incorrect email or password");
+      throw new UnauthorizedException("Incorrect email or password");
     }
 
     delete user.password;

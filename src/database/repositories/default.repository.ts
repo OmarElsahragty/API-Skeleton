@@ -36,17 +36,11 @@ export default class DefaultRepository<T> {
 
   create = async (data: T): Promise<T> => {
     return this.model
-      .findOneAndUpdate(
-        queryBuilder<T>({ filter: data, options: { flattenQuery: true } }),
-        { ...data, isDeleted: false },
-        { upsert: true, new: true }
-      )
+      .findOneAndUpdate(queryBuilder<T>({ options: { falsy: true } }), { $set: data } as UpdateQuery<T>, {
+        new: true,
+        upsert: true,
+      })
       .lean() as Promise<T>;
-  };
-
-  // TODO INSERT MANY
-  insertMany = async (data: T[]): Promise<T[]> => {
-    return Promise.all(data.map(async item => await this.create(item)));
   };
 
   update = async (queryOptions: QueryOptionsInterface<T>, data: UpdateQuery<T>): Promise<T | null> => {

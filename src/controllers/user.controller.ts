@@ -9,7 +9,7 @@ class UserController extends DefaultController<UserInterface> {
   }
 
   authenticate = async (req: Request, res: Response, next: NextFunction) => {
-    return this.exec(userService.authenticate(req.body.email, req.body.password), res, next);
+    return this.response(userService.authenticate(req.body.email, req.body.password), res, next);
   };
 }
 

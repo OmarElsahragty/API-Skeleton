@@ -1,31 +1,56 @@
 import { Request, Response, NextFunction } from "express";
-import { notFound } from "../errors";
+import { ResponseInterface, IntervalInterface, Exception, NotFoundException } from "../types";
 import { parser } from "../helpers";
 import Service from "../services";
 
 export default class DefaultController<T> {
   constructor(private service: Service<T>) {}
 
-  protected exec = async (promise: Promise<any>, res: Response, next: NextFunction) => {
+  protected response = async <T>(logic: Promise<T> | Promise<T>[], res: Response, next: NextFunction) => {
     try {
-      const data = await promise;
-      if (!data) throw notFound();
-      return res.status(200).send(data);
+      const response: ResponseInterface<T> = {};
+
+      const { fulfilled = [], rejected = [] }: { fulfilled?: T | T[]; rejected?: Exception[] } = (
+        await Promise.allSettled(Array.isArray(logic) ? logic : [logic])
+      ).reduce(
+        (acc: { fulfilled: T[]; rejected: Exception[] }, item) => {
+          if (item.status === "fulfilled") {
+            return Object.assign(acc, { fulfilled: acc.fulfilled.concat(item.value) });
+          }
+
+          return Object.assign(acc, { rejected: acc.rejected.concat([new Exception(item.reason)]) });
+        },
+        { fulfilled: [], rejected: [] }
+      );
+
+      if (!fulfilled.length && !rejected.length) throw new NotFoundException();
+      if (!fulfilled.length) throw rejected;
+
+      response.metadata = { errors: rejected.map(({ status, message }) => ({ status, message })) };
+      response.data = fulfilled?.length < 2 ? fulfilled?.[0] : fulfilled;
+
+      return res
+        .status(
+          fulfilled.length
+            ? 200
+            : rejected.reduce((acc: number, rejection) => (rejection.status < acc ? rejection.status : acc), 0)
+        )
+        .send(response);
     } catch (err) {
       next(err);
     }
   };
 
   list = async (req: Request, res: Response, next: NextFunction) => {
-    const filter = req.query.filter ? parser(req.query.filter.toString()) : undefined;
-    const intervals = req.query.intervals ? parser(req.query.intervals.toString()) : [];
+    const filter = parser<Partial<T>>(req.query.filter?.toString());
+    const intervals = parser<IntervalInterface[]>(req.query.intervals?.toString());
     const projection =
       req.query.projection
         ?.toString()
         .split(",")
         .reduce((acc: Record<string, 1>, item) => (item ? Object.assign(acc, { [item]: 1 }) : acc), {}) || {};
 
-    return this.exec(
+    return this.response(
       this.service.list(
         {
           filter,
@@ -48,17 +73,17 @@ export default class DefaultController<T> {
   };
 
   get = async (req: Request, res: Response, next: NextFunction) =>
-    this.exec(this.service.get({ id: req.params.id }), res, next);
+    this.response(this.service.get({ id: req.params.id }), res, next);
 
   create = async (req: Request, res: Response, next: NextFunction) =>
-    this.exec(this.service.create(req.body), res, next);
+    this.response(this.service.create(req.body), res, next);
 
   bulkCreate = async (req: Request, res: Response, next: NextFunction) =>
-    this.exec(this.service.bulkCreate(req.body), res, next);
+    this.response(this.service.bulkCreate(req.body), res, next);
 
   update = async (req: Request, res: Response, next: NextFunction) =>
-    this.exec(this.service.update({ id: req.params.id }, req.body), res, next);
+    this.response(this.service.update({ id: req.params.id }, req.body), res, next);
 
   delete = async (req: Request, res: Response, next: NextFunction) =>
-    this.exec(this.service.delete({ id: req.params.id }), res, next);
+    this.response(this.service.delete({ id: req.params.id }), res, next);
 }

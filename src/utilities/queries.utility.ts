@@ -32,9 +32,9 @@ export const queryBuilder = <T>({
   id = "",
   filter = {},
   intervals = [],
-  options = { flattenQuery: false, operation: "and" },
+  options = { flattenQuery: false, operation: "and", falsy: false },
 }: QueryOptionsInterface<T> = {}): FilterQuery<T> => {
-  // TODO Add ZOD validation for QueryOptionsInterface
+  if (options.falsy) return { _id: { $exists: false } };
 
   const query = options.flattenQuery ? flatten(removeUndefined(filter)) : removeUndefined(filter);
 

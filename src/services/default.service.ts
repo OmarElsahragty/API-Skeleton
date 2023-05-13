@@ -16,9 +16,7 @@ export default class DefaultService<T> {
     return this.repository.create(data);
   };
 
-  bulkCreate = async (data: T[]) => {
-    return this.repository.insertMany(data);
-  };
+  bulkCreate = async (data: T[]) => data.map(item => this.repository.create(item));
 
   update = async (queryOptions: QueryOptionsInterface<T>, data: Partial<T>) => {
     return this.repository.update(queryOptions, data);

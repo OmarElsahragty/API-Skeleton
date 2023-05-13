@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, UpdateQuery } from "mongoose";
 import { createHash } from "../../libraries";
 import { schemas } from "../../../constants";
 import { UserInterface, AccessTypes } from "../../types";
@@ -21,8 +21,9 @@ const userSchema = new Schema<UserInterface>(
 // ************** hash ************** //
 
 userSchema.pre("findOneAndUpdate", async function (next) {
-  const data = this.getUpdate() as UserInterface;
+  const data = this.getUpdate() as UpdateQuery<UserInterface>;
   if (data?.password) data.password = await createHash(data.password);
+  if (data?.$set?.password) data.$set.password = await createHash(data.$set.password);
   this.setUpdate(data);
   next();
 });
