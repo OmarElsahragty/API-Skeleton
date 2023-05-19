@@ -9,10 +9,7 @@ export default Object.freeze({
 
   port: parseInt(process.env.PORT || "5000"),
 
-  mongoDB: {
-    uri: process.env.MONGO_URI || "",
-    dbName: process.env.MONGO_DB_NAME || "",
-  },
+  mongoURI: process.env.MONGO_URI || "",
 
   jwt: {
     secret: process.env.JWT_SECRET || "",

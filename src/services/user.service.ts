@@ -1,7 +1,6 @@
 import { sign } from "jsonwebtoken";
 import DefaultService from "./default.service";
 import { userRepository } from "../database/repositories";
-import { getTokenDate } from "../helpers";
 import { verifyHash } from "../libraries";
 import { UserInterface, UnauthorizedException } from "../types";
 import config from "../../config";
@@ -20,7 +19,7 @@ class UserService extends DefaultService<UserInterface> {
 
     delete user.password;
 
-    return { user, token: `Bearer ${sign(getTokenDate(user), config.jwt.secret, { expiresIn: config.jwt.lifeTime })}` };
+    return { user, token: `Bearer ${sign({ id: user._id }, config.jwt.secret, { expiresIn: config.jwt.lifeTime })}` };
   };
 }
 

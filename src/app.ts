@@ -4,7 +4,7 @@ import config from "../config";
 
 export default async () => {
   try {
-    await establishConnection(config.mongoDB);
+    await establishConnection(config.mongoURI);
     new http(config.port, config.environment).start();
   } catch (err) {
     console.error(err);
